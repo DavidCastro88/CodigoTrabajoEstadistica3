@@ -10,6 +10,7 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-regexponencialv02.R")
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-SuavizamientoEstacional.R")
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-Descomp.Loessv02.R")
+source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-interpdeltas.R")
 
 #Lectura de Datos --------------------------------------------------------------------------------------------------------------------
 #Reemplazar este fragmento por el codigo que deja la profesora en el archivo PROGRAMA-R-LECTURA-DATOS ASIGNADOS-022024.R
@@ -207,6 +208,18 @@ legend("topleft",legend=c("Serie ajustada estacionalmente","Tendencia LOESS"),co
 #Graficando St estimada por el filtro de descomposicion
 win.graph()
 plot(mod4$St,ylab=expression(hat(S)[t])) 
+
+#------EFECTOS ESTACIONALES ESTIMADOS GLOBALES--------------------------------------
+
+deltas1=interpdeltas(mod1,gradopoly=1,aditivo=TRUE,plotit=FALSE);deltas1$deltasi
+deltas2=interpdeltas(mod2,gradopoly=4,aditivo=TRUE,plotit=FALSE);deltas1$deltasi
+
+#Grafico de los efectos estacionales estimados, en un mismo plano
+win.graph()
+interpdeltas(mod1,gradopoly=1,aditivo=TRUE,plotit=TRUE)
+lines(deltas1$periodo,deltas1$deltasi,type="b",lty=1,pch=1,col=1,lwd=3)
+lines(deltas2$periodo,deltas2$deltasi,type="b",lty=2,pch=2,col=2,lwd=3)
+legend("bottomright",legend=c("Modelo 1","Modelo 2"),col=1:2,pch=1:2,lty=1:2,lwd=3)
 
 #--GRAFICAS RESIDUOS DE AJUSTE PARA LOS 4 MODELOS ------------------------------
 

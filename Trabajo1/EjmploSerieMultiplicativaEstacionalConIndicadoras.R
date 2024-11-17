@@ -208,6 +208,17 @@ legend("topleft",legend=c("Serie ajustada estacionalmente","Tendencia LOESS"),co
 win.graph()
 plot(mod4$St,ylab=expression(hat(S)[t])) 
 
+#------EFECTOS ESTACIONALES ESTIMADOS GLOBALES--------------------------------------
+expdeltasi1=interpdeltas(modelo=mod1,gradopoly=1,aditivo=FALSE,plotit=FALSE);expdeltasi1$expdeltasi100
+expdeltasi2=interpdeltas(modelo=mod2,gradopoly=4,aditivo=FALSE,plotit=FALSE);expdeltasi2$expdeltasi100
+
+#Grafico de los efectos estacionales estimados, en un mismo plano
+win.graph()
+interpdeltas(modelo=mod1,gradopoly=1,aditivo=FALSE,plotit=TRUE)
+lines(expdeltasi1$periodo,expdeltasi1$expdeltasi100,type="b",lty=1,pch=1,col=1,lwd=3)
+lines(expdeltasi2$periodo,expdeltasi2$expdeltasi100,type="b",lty=2,pch=2,col=2,lwd=3)
+legend("topleft",legend=c("Modelo 1","Modelo 2"),col=1:2,pch=1:2,lty=1:2,lwd=3)
+
 #------------------------------ GRAFICAS RESIDUOS DE AJUSTE PARA LOS 4 MODELOS ------------------------------
 
 #MODELO 1
