@@ -1,4 +1,4 @@
-#**Codigo Trabajo 1**
+# **Codigo Trabajo 1**
 
 Si tu serie es Aditiva, con variables trigonometricas en la estacionalidad [Aquí](https://github.com/DavidCastro88/CodigoTrabajoEstadistica3/blob/main/EjemploSerieAditivaEstacionalConTrigonometricas.R)
 
