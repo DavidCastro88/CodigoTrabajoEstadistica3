@@ -145,6 +145,7 @@ accuracy(ytpron3,ytnuevo)
 amplcobmod3=amplitud.cobertura(real=ytnuevo,LIP=pronos3[,2],LSP=pronos3[,3]);amplcobmod3#Precision pronosticos por I.P Modelo 3
 #precision pronosticos puntuales modelo 4
 accuracy(ytpron4,ytnuevo)
+amplcobmod4=amplitud.cobertura(real=ytnuevo,LIP=pronos4[,2],LSP=pronos4[,3]);amplcobmod4
 
 #--TABLAS DE LAS MEDIDAS DE AJUSTE Y PRONOSTICOS DE LOS 4 MODELOS --------------
 
