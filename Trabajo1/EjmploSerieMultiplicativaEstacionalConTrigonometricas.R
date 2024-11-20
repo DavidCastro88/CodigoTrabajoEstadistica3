@@ -11,61 +11,64 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-regexponencialv02.R")
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-SuavizamientoEstacional.R")
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-Descomp.Loessv02.R")
+source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-predict_expo.R")
 
 #Lectura de Datos --------------------------------------------------------------------------------------------------------------------
 #Reemplazar este fragmento por el codigo que deja la profesora en el archivo PROGRAMA-R-LECTURA-DATOS ASIGNADOS-022024.R
 
-#Leer anex-EMMET-TotalNacional-oct2023-Elaboracion de Bebidas.csv, columna 5: Produccion nominal
-Datos7=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",4),"numeric",rep("NULL",6)))
-Datos7=ts(Datos7,freq=12,start=c(2001,1))
-plot(Datos7)
+Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",6),"numeric",rep("NULL",4)))
+Datosx=ts(Datosx,freq=12,start=c(2001,1))
+plot(Datosx)
 
 #--ANALISIS DESCRIPTIVO ------------------------------------------------------------------------------------------------------------------
 
 #Graficando la serie 
 win.graph()
-plot(Datos7, ylab="Datos7",xlab="Time")
+plot(Datosx, ylab="Datosx",xlab="Time")
 
 #Graficando la serie en escala logaritmica 
 win.graph()
-plot(log(Datos7), ylab="Datos7")
+plot(log(Datosx), ylab="Datosx")
 
 #Graficando la tendencia 
 win.graph()
-Tt.log=decompose(log(Datos7))$trend
-plot(Tt.log,ylim=c(min(log(Datos7)),max(log(Datos7))))
+Tt.log=decompose(log(Datosx))$trend
+plot(Tt.log,ylim=c(min(log(Datosx)),max(log(Datosx))))
 
 #Graficando boxplot 
 win.graph()
-boxplot(log(Datos7)~cycle(Datos7))
+boxplot(log(Datosx)~cycle(Datosx))
 
 #periodograma 
 win.graph()
-x=diff(log(Datos7))  
+x=diff(log(Datosx))  
 plot(x,ylab=expression(log(Y[t])-log(Y[t-1])));abline(h=mean(x))
-periodogram(x);abline(v=c(1/12,2/12,3/12,4/12,25/72,5/12,6/12),col=2,lty=2)
+periodogram(x);
+abline(v=c(1/12,2/12,3/12,4/12,5/12,6/12),col=2,lty=2)
+abline(v=c(25/72),col=4,lty=2)
+
 
 #DEFINIENDO VARIABLES Y CREACION DE LA MATRIZ NO MOVER -----------------------------------------------------------------------------------
 m=12 
-n=length(Datos7)-m
+n=length(Datosx)-m
 
 #PARA EL AJUSTE
 
 t=1:n
-yt=ts(Datos7[t],freq=m,start=c(2001,1))
+yt=ts(Datosx[t],freq=m,start=c(2001,1))
 poli=Mipoly(tiempo=t,grado=4) # Grado del polinomio
 #Funciones trigonometricas en las frecuencias j/12, j=1,2,3,5,6,25/72
-trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,5,6)/12,25/72),indicej=c(1,2,3,5,6,4))
+trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
 
 #Matriz de diseño en el ajuste
 X1=data.frame(poli,trigon)
 head(X1) 
 
 #PARA LOS PRONOSTICOS
-tnuevo=(n+1):length(Datos7)
-ytnuevo=ts(Datos7[tnuevo],freq=m,start=c(2023,8))
+tnuevo=(n+1):length(Datosx)
+ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
 polinuevo=Mipoly(t=tnuevo,grado=4)
-trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,5,6)/12,25/72),indicej=c(1,2,3,5,6,4))
+trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
 
 #Matriz de diseño en los pronosticos
 X1nuevo=data.frame(polinuevo,trigonnuevo)
@@ -88,10 +91,10 @@ ythatmod2=ts(fitted(mod2),freq=m,start=start(yt))
 
 #-----MODELO 3:SEHW ------------------------------------------------------------
 
-mod3=SuavizamientoEstacional(yt,seasonal="multiplicative",h=m,optim.start = c(alpha = 0.3, beta = 0.01, gamma = 0.1))
+mod3=SuavizamientoEstacional(yt,seasonal="multiplicative",h=m)
 str(mod3) 
 
-#-----MODELO 4:DLC(aicc) -------------------------------------------------------
+#-----MODELO 4:DLC(AICC) -------------------------------------------------------
 
 mod4=Descomp.Loessv02(serie.ajuste=yt,h=m,tipo.descomp="multiplicative",grado=2,criterio="aicc")
 str(mod4) 
@@ -122,9 +125,10 @@ pronos1=ts(pronos1,freq=m,start=start(ytnuevo))
 pronos1
 ytpron1=pronos1[,1]
 #Pronosticos del modelo 2 en la escala original, solo son de tipo puntual por ser modelo no lineal
-pronos2=predict(mod2,newdata=X1nuevo,interval="prediction",level=0.95)
-ytpron2=ts(pronos2,freq=m,start=start(ytnuevo))
-ytpron2 
+pronos2=predict_expo(mod2,new.data=X1nuevo,interval="prediction",level=0.95)
+pronos2=ts(pronos2,freq=m,start=start(ytnuevo))
+pronos2
+ytpron2=pronos2[,1]
 #Pronosticos del modelo 3 
 pronos3=mod3$forecast
 pronos3
@@ -142,12 +146,14 @@ accuracy(ytpron1,ytnuevo)
 amplcobmod1=amplitud.cobertura(real=ytnuevo,LIP=pronos1[,2],LSP=pronos1[,3]);amplcobmod1
 #Precision pronosticos puntuales modelo 2
 accuracy(ytpron2,ytnuevo) 
+amplcobmod2=amplitud.cobertura(real=ytnuevo,LIP=pronos2[,2],LSP=pronos2[,3]);amplcobmod2
 #Precision pronosticos puntuales modelo 3
 accuracy(ytpron3,ytnuevo) 
 amplcobmod3=amplitud.cobertura(real=ytnuevo,LIP=pronos3[,2],LSP=pronos3[,3]);amplcobmod3
 #Precision pronosticos puntuales modelo 4
 accuracy(ytpron4,ytnuevo)
 amplcobmod4=amplitud.cobertura(real=ytnuevo,LIP=pronos4[,2],LSP=pronos4[,3]);amplcobmod4
+
 
 #--------------------------------TABLAS DE LAS MEDIDAS DE AJUSTE Y PRONOSTICOS DE LOS 4 MODELOS --------------
 
@@ -163,12 +169,12 @@ rownames(tabla1.criterios)=c("Modelo 1","Modelo 2","Modelo 3","Modelo 4")
 tabla1.criterios
 
 #tabla resumen de pronosticos 
-tabla.pronosticos=cbind(pronos1,ytpron2,pronos3,ytpron4)
+tabla.pronosticos=cbind(pronos1,pronos2,pronos3,pronos4)
 tabla.pronosticos
 
 #Tabulando medidas de pronosticos
 precision.puntuales=rbind(accuracy(ytpron1,ytnuevo), accuracy(ytpron2,ytnuevo), accuracy(ytpron3,ytnuevo), accuracy(ytpron4,ytnuevo))[,c(2,3,5)]
-precision.intervalos=rbind(amplcobmod1,c(NA,NA),amplcobmod3,c(NA,NA))
+precision.intervalos=rbind(amplcobmod1,amplcobmod2,amplcobmod3,amplcobmod4)
 tabla2.precision=cbind(precision.puntuales,precision.intervalos)
 rownames(tabla2.precision)=c("Modelo 1","Modelo 2","Modelo 3","Modelo 4")
 tabla2.precision
@@ -177,25 +183,25 @@ tabla2.precision
 
 #MODELO 1
 win.graph()
-plot(Datos7,ylab="Datos7")
+plot(Datosx,ylab="Datosx")
 lines(ythatmod1,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 1"),lty=1,col=c(1,2))
 
 #MODELO 2
 win.graph()
-plot(Datos7,ylab="Datos7")
+plot(Datosx,ylab="Datosx")
 lines(ythatmod2,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 2"),lty=1,col=c(1,2)) 
 
 #MODELO 3
 win.graph()
-plot(Datos7,ylab="Datos7")
+plot(Datosx,ylab="Datosx")
 lines(fitted(mod3),col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 3"),lty=1,col=c(1,2))
 
 #MODELO 4**
 win.graph()
-plot(Datos7,ylab="Datos7")
+plot(Datosx,ylab="Datosx")
 lines(fitted(mod4),col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 4"),lty=1,col=c(1,2))
 
@@ -275,5 +281,6 @@ write.csv2(tabla1.criterios,file="tablacriteriostrabajo1.csv",row.names = TRUE)
 write.csv2(tabla.pronosticos,file="tablapronosticostrabajo1.csv",row.names = TRUE)
 write.csv2(pronos4,file="tablapronosticosmodelo4trabajo1.csv",row.names = TRUE)
 write.csv2(tabla2.precision,file="tablamedidasprecisiondepronosticostrabajo1.csv",row.names = TRUE)
+
 
 
