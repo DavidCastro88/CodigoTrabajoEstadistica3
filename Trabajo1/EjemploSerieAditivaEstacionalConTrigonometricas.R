@@ -137,15 +137,20 @@ ytpron4=pronos4[,1]#Precision pronosticos puntuales
 #precision pronosticos puntuales modelo 1
 accuracy(ytpron1,ytnuevo)
 amplcobmod1=amplitud.cobertura(real=ytnuevo,LIP=pronos1[,2],LSP=pronos1[,3]);amplcobmod1#precision pronosticos por I.P modelo 1
+ScoreIP1=IntervalScore(real=ytnuevo,LIP=pronos1[,2],LSP=pronos1[,3],alpha=0.05);ScoreIP1
 #precision pronosticos puntuales modelo 2
 accuracy(ytpron2,ytnuevo)
 amplcobmod2=amplitud.cobertura(real=ytnuevo,LIP=pronos2[,2],LSP=pronos2[,3]);amplcobmod2#precision pronosticos por I.P modelo 1
+ScoreIP2=IntervalScore(real=ytnuevo,LIP=pronos2[,2],LSP=pronos2[,3],alpha=0.05);ScoreIP2
 #precision pronosticos puntuales modelo 3
 accuracy(ytpron3,ytnuevo) 
 amplcobmod3=amplitud.cobertura(real=ytnuevo,LIP=pronos3[,2],LSP=pronos3[,3]);amplcobmod3#Precision pronosticos por I.P Modelo 3
+ScoreIP3=IntervalScore(real=ytnuevo,LIP=pronos3[,2],LSP=pronos3[,3],alpha=0.05);ScoreIP3
 #precision pronosticos puntuales modelo 4
 accuracy(ytpron4,ytnuevo)
 amplcobmod4=amplitud.cobertura(real=ytnuevo,LIP=pronos4[,2],LSP=pronos4[,3]);amplcobmod4
+ScoreIP4=IntervalScore(real=ytnuevo,LIP=pronos4[,2],LSP=pronos4[,3],alpha=0.05);ScoreIP4
+
 #--TABLAS DE LAS MEDIDAS DE AJUSTE Y PRONOSTICOS DE LOS 4 MODELOS --------------
 
 Modelo1=summary(mod1)$coefficients
