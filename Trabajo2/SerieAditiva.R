@@ -2,7 +2,7 @@
 rm(list=ls(all=TRUE))
 library(forecast)
 library(lmtest)
-#library(FitAR)
+library(fANCOVA)
 library(nlme)
 library(TSA)
 library(car)
@@ -19,48 +19,69 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-interpdeltas.R")
 
 #Leer anex-EMMET-TotalNacional-oct2023-Elaboracion de Bebidas.csv, columna 5: Produccion nominal
-Datos42=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",7),"numeric",rep("NULL",3)))
-Datos42=ts(Datos42,freq=12,start=c(2001,1))
+Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",7),"numeric",rep("NULL",3)))
+Datosx=ts(Datosx,freq=12,start=c(2001,1))
 win.graph()
-plot(Datos42)
+plot(Datosx)
 
 #--------------------------------PUNTO 2a: ANALISIS DESCRIPTIVO DE LA SERIE---------------------------------
 
 #Grafica de la serie
 win.graph()
-plot(Datos42,ylab="Datos42")
+plot(Datosx,ylab="Datosx")
 
 #Grafica ACF estimada con la serie: m = 36 en el caso mensual 
 win.graph()
-acf(as.numeric(Datos42),lag.max=36,ci.type="ma",col=4,ci.col=2)
+acf(as.numeric(Datosx),lag.max=36,ci.type="ma",col=4,ci.col=2)
 
 #--------------------------------PUNTO 2b: MODELO DE REGRESION GLOBAL-----------------------------------------
 
 m=12
-n=length(Datos42)-m
+n=length(Datosx)-m
 t=1:n
-yt=ts(Datos42[t],freq=m,start=c(2001,1))
+yt=ts(Datosx[t],freq=m,start=c(2001,1))
 poli=Mipoly(tiempo=t,grado=4)
-mes=seasonaldummy(yt) 
+
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
+
+#mes=seasonaldummy(yt)   # Utilizo esta si es con Indicadoras
+trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))  #Utilizo esta si es con trigonometricas
 
 #Matriz de diseño en el ajuste
-X1=data.frame(poli,mes)  #Grado 1 - Modelo 1 Global
+
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
+
+#X1=data.frame(poli,mes)   # Utilizo esta si es con Indicadoras
+X1=data.frame(poli,trigon)  # Utilizo esta si es con trigonometricas
 head(X1) 
 
-X2=data.frame(poli,mes) #Grado 4 - Modelo 2 Global
-head(X2) 
 #PARA LOS PRONOSTICOS
+tnuevo=(n+1):length(Datosx)
+ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
+polinuevo=Mipoly(t=tnuevo,grado=3) #Cambiar Grado del polinomio
 
-tnuevo=(n+1):length(Datos13) 
-polinuevo=Mipoly(tiempo=tnuevo,grado=4)
-ytnuevo=ts(Datos13[tnuevo],freq=m,start=c(2023,8)) 
-mesnuevo=seasonaldummy(yt,h=m)
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
+trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5)) #Si es con trigonometricas
+#mesnuevo=seasonaldummy(yt,h=m)  #Si es con Indicadoras#Si es con indicadoras
+
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
+#Matriz de diseño en los pronosticos
+X1nuevo=data.frame(polinuevo,trigonnuevo)  #Si es con trigonometricas
+#X1nuevo=data.frame(polinuevo,mesnuevo) #Si es con Indicadoras#Si es con indicadoras
+head(X1nuevo) 
+
+
+#PARA LOS PRONOSTICOS
+tnuevo=(n+1):length(Datosx)
+ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
+polinuevo=Mipoly(t=tnuevo,grado=3) #Cambiar Grado del polinomio
+trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
 
 #Matriz de diseño en los pronosticos
-X1nuevo=data.frame(t=tnuevo,mesnuevo)
+X1nuevo=data.frame(polinuevo,trigonnuevo)
 head(X1nuevo) 
-X2nuevo=data.frame(polinuevo,mesnuevo)
-head(X2nuevo) 
+
+
 
 # AJUSTE DEL MODELO
 
@@ -84,7 +105,7 @@ Criteriosglobal= exp.crit.inf.resid(residuales=residuals(modglobal),n.par=nparmo
 
 #Grafico del ajuste
 win.graph()
-plot(Datos42, ylab="Datos42")
+plot(Datosx, ylab="Datosx")
 lines(ythatglobal,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo global"),lty=1,col=c(1,2))
 
@@ -138,7 +159,7 @@ BP.LB.test(residuals(modglobal),maxlag=36,type="Ljung")
 #--------------------- PUNTO 3b: IDENTIFICACION DE POSIBLES MODELOS PARA Et--------------------------
 
 #EACF
-eacf(residuals(modglobal),ar.max = 36, ma.max = 36)
+eacf(residuals(modglobal),ar.max = 36, ma.max = 36)  #Modificar si 24X24
 
 #Identificación de modelos AR(p) con SelectModel --- SOLO SI ACF tienen patron tipo cola --
 SelectModel(residuals(modglobal),lag.max=36,Criterion="AIC",ARModel ="AR")
@@ -199,25 +220,25 @@ ythat4=ts(fitted(modelo4),freq=m,start=start(yt))
 
 #MODELO 1
 win.graph()
-plot(Datos42, ylab="Datos13")
+plot(Datosx, ylab="Datos13")
 lines(ythatmod1,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 1"),lty=1,col=c(1,2))
 
 #MODELO 2
 win.graph()
-plot(Datos42, ylab="Datos13")
+plot(Datosx, ylab="Datos13")
 lines(ythatmod2,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 2"),lty=1,col=c(1,2)) 
 
 #MODELO 3
 win.graph()
-plot(Datos42, ylab="Datos13")
+plot(Datosx, ylab="Datos13")
 lines(fitted(mod3),col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 3"),lty=1,col=c(1,2))
 
 #MODELO 4
 win.graph()
-plot(Datos42, ylab="Datos13")
+plot(Datosx, ylab="Datos13")
 lines(fitted(mod4),col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 4"),lty=1,col=c(1,2))
 
@@ -399,7 +420,7 @@ str(modelocal)
 
 #Grafica de su ajuste
 win.graph()
-plot(Datos42, ylab="Datos42")
+plot(Datosx, ylab="Datosx")
 lines(fitted(modelocal),col=2,lwd=2)
 legend("topleft",legend=c("Original","SEHW"),lty=1,col=c(1,2))
 

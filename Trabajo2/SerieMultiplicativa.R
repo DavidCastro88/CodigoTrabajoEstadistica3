@@ -19,27 +19,27 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-interpdeltas.R")
 
 #Leer anex-EMMET-TotalNacional-jul2024-Fabricacion de Muebles Colchones y Somieres.csv, columna 7: Ventas nominal
-Datos15=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",6),"numeric",rep("NULL",4)))
-Datos15=ts(Datos15,freq=12,start=c(2001,1))
-plot(Datos15)
+Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",6),"numeric",rep("NULL",4)))
+Datosx=ts(Datosx,freq=12,start=c(2001,1))
+plot(Datosx)
 
 #--------------------------------PUNTO 2a: ANALISIS DESCRIPTIVO DE LA SERIE---------------------------------
 
 #Grafica de la serie
 win.graph()
-plot(Datos15,ylab="Datos15")
+plot(Datosx,ylab="Datosx")
 
 #Grafica ACF estimada con la serie: m = 36 en el caso mensual 
 win.graph()
-acf(as.numeric(Datos15),lag.max=36,ci.type="ma",col=4,ci.col=2)
+acf(as.numeric(Datosx),lag.max=36,ci.type="ma",col=4,ci.col=2)
 
 #--------------------------------PUNTO 2b: MODELO DE REGRESION GLOBAL-----------------------------------------
 
 m=12
-n=length(Datos15)-m
+n=length(Datosx)-m
 t=1:n
-yt=ts(Datos15[t],freq=m,start=c(2001,1))
-poli=Mipoly(tiempo=t,grado=3)
+yt=ts(Datosx[t],freq=m,start=c(2001,1))
+poli=Mipoly(tiempo=t,grado=3) #Cambiar Grado del polinomio
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 
@@ -47,37 +47,39 @@ poli=Mipoly(tiempo=t,grado=3)
 trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))  #Utilizo esta si es con trigonometricas
 
 #Matriz de diseño en el ajuste
+
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
+
 #X1=data.frame(poli,mes)   # Utilizo esta si es con Indicadoras
 X1=data.frame(poli,trigon)  # Utilizo esta si es con trigonometricas
 head(X1) 
 
 
 #PARA LOS PRONOSTICOS
-tnuevo=(n+1):length(Datos15)
-ytnuevo=ts(Datos15[tnuevo],freq=m,start=c(2023,8))
-polinuevo=Mipoly(t=tnuevo,grado=3)
-trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
+tnuevo=(n+1):length(Datosx)
+ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
+polinuevo=Mipoly(t=tnuevo,grado=3) #Cambiar Grado del polinomio
 
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
+trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5)) #Si es con trigonometricas
+#mesnuevo=seasonaldummy(yt,h=m)  #Si es con Indicadoras#Si es con indicadoras
+
+#-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 #Matriz de diseño en los pronosticos
-X1nuevo=data.frame(polinuevo,trigonnuevo)
+X1nuevo=data.frame(polinuevo,trigonnuevo)  #Si es con trigonometricas
+#X1nuevo=data.frame(polinuevo,mesnuevo) #Si es con Indicadoras#Si es con indicadoras
 head(X1nuevo) 
 
 
 # AJUSTE DEL MODELO
-modglobal=lm((yt)~.,data=X1)
+modglobal=lm(log(yt)~.,data=X1)
 summary(modglobal)
 
-#Calculo valores ajustados del modelo 1
-ythatmod1=ts(fitted(modglobal),freq=m,start=start(yt))
-
-modglobal=lm((yt)~.,data=X1)
-summary(modglobal)
+#Calculo valores ajustados del modelo global
+ythatglobal=ts(exp(fitted(modglobal))*exp(summary(modglobal)$sigma^2/2),freq=m,start=start(yt))
 tabla.parametros.globales=summary(modglobal)$coefficients
 tabla.parametros.globales
 write.csv2(tabla.parametros.globales,file="tablamod1ymod2trabajo1.csv",row.names = TRUE)
-
-#Calculo valores ajustados del modelo global
-ythatglobal=ts(fitted(modglobal),freq=m,start=start(yt))
 
 #Calculo de los criterios AIC y BIC en modelo global
 nparmodglobal=length(coef(modglobal)[coef(modglobal)!=0]);nparmodglobal 
@@ -85,12 +87,12 @@ Criteriosglobal= exp.crit.inf.resid(residuales=residuals(modglobal),n.par=nparmo
 
 #Grafico del ajuste
 win.graph()
-plot(Datos15, ylab="Datos15")
+plot(Datosx, ylab="Datosx")
 lines(ythatglobal,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo global"),lty=1,col=c(1,2))
 
 #Pronosticos del modelo global en la escala original
-pronosglobal=predict(modglobal,newdata=X1nuevo,interval="prediction",level=0.95)
+pronosglobal=exp(predict(modglobal,newdata=X1nuevo,interval="prediction",level=0.95))*exp(summary(modglobal)$sigma^2/2)
 pronosglobal=ts(pronosglobal,freq=m,start=start(ytnuevo))
 pronosglobal
 ytpronglobal=pronosglobal[,1]
@@ -200,25 +202,25 @@ ythat4=exp(modelo4$fitted)*exp(modelo4$sigma2/2)
 
 #MODELO 1
 win.graph()
-plot(Datos15, ylab="Datos15")
+plot(Datosx, ylab="Datosx")
 lines(ythatmod1,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 1"),lty=1,col=c(1,2))
 
 #MODELO 2
 win.graph()
-plot(Datos15, ylab="Datos15")
+plot(Datosx, ylab="Datosx")
 lines(ythatmod2,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 2"),lty=1,col=c(1,2)) 
 
 #MODELO 3
 win.graph()
-plot(Datos15, ylab="Datos15")
+plot(Datosx, ylab="Datosx")
 lines(fitted(mod3),col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 3"),lty=1,col=c(1,2))
 
 #MODELO 4
 win.graph()
-plot(Datos15, ylab="Datos15")
+plot(Datosx, ylab="Datosx")
 lines(fitted(mod4),col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 4"),lty=1,col=c(1,2))
 
@@ -368,7 +370,7 @@ ScoreIP4=IntervalScore(real=ytnuevo,LIP=predmodelo4[,2],LSP=predmodelo4[,3],alph
 
 #Grafica de los pronosticos
 win.graph()
-plot(ytnuevo,type="b",ylab="Datos15",col=1,pch=19,ylim=c(min(ytnuevo,ytpron1,ytpron2,ytpron3,ytpron4),max(ytnuevo,ytpron1,ytpron2,ytpron3,ytpron4)),lwd=2,xaxt="n")
+plot(ytnuevo,type="b",ylab="Datosx",col=1,pch=19,ylim=c(min(ytnuevo,ytpron1,ytpron2,ytpron3,ytpron4),max(ytnuevo,ytpron1,ytpron2,ytpron3,ytpron4)),lwd=2,xaxt="n")
 axis(1,at=time(ytnuevo),labels=c("ago-23","sep-23","oct-23","nov-23","dic-23","ene-24","feb-24","mar-24","abr-24","may-24","jun-24","jul-24"),cex.axis=0.7)
 lines(ytpron1,col=2,pch=1,type="b",lwd=2)
 lines(ytpron2,col=3,pch=2,type="b",lwd=2)
@@ -400,7 +402,7 @@ str(modelocal)
 
 #Grafica de su ajuste
 win.graph()
-plot(Datos15, ylab="Datos15")
+plot(Datosx, ylab="Datosx")
 lines(fitted(modelocal),col=2,lwd=2)
 legend("topleft",legend=c("Original","SEHW"),lty=1,col=c(1,2))
 
