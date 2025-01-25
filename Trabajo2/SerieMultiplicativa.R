@@ -20,7 +20,7 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 
 #Leer anex-EMMET-TotalNacional-jul2024-Fabricacion de Muebles Colchones y Somieres.csv, columna 7: Ventas nominal
 Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",6),"numeric",rep("NULL",4)))
-Datosx=ts(Datosx,freq=12,start=c(2001,1))
+Datosx=ts(Datos8,freq=12,start=c(2001,1))
 plot(Datosx)
 
 #--------------------------------PUNTO 2a: ANALISIS DESCRIPTIVO DE LA SERIE---------------------------------
@@ -39,7 +39,7 @@ m=12
 n=length(Datosx)-m
 t=1:n
 yt=ts(Datosx[t],freq=m,start=c(2001,1))
-poli=Mipoly(tiempo=t,grado=3) #Cambiar Grado del polinomio
+poli=Mipoly(tiempo=t,grado=4) #Cambiar Grado del polinomio
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 
@@ -58,7 +58,7 @@ head(X1)
 #PARA LOS PRONOSTICOS
 tnuevo=(n+1):length(Datosx)
 ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
-polinuevo=Mipoly(t=tnuevo,grado=3) #Cambiar Grado del polinomio
+polinuevo=Mipoly(t=tnuevo,grado=4) #Cambiar Grado del polinomio
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5)) #Si es con trigonometricas
@@ -157,13 +157,13 @@ auto.arima(serieEt,ic="aic")
 auto.arima(serieEt,ic="bic")
 
 #Identificación con armasubsets
-plot(armasubsets(residuals(modglobal),nar=12,nma=12,y.name="AR",ar.method="ml"))
+plot(armasubsets(residuals(modglobal),nar=24,nma=24,y.name="AR",ar.method="ml"))
 
 #--------------------- PUNTO 4: Modelos de regresion global con errores estructurales Et-------------
 
 #-----MODELO 1:AR(12)-----------------------------------------------------------
 
-modelo1=Arima(log(yt),order=c(12,0,0),xreg=as.matrix(X1),method="ML") 
+modelo1=Arima(log(yt),order=c(23,0,0),xreg=as.matrix(X1),method="ML") 
 k1=length(coef(modelo1)[coef(modelo1)!=0]);k1 
 dfmodelo1=n-k1
 coeftest(modelo1,df=dfmodelo1)
@@ -172,7 +172,7 @@ ythat1=exp(modelo1$fitted)*exp(modelo1$sigma2/2)
 
 #-----MODELO 2:ARMA(2,12)-------------------------------------------------------
 
-modelo2=Arima(log(yt),order=c(2,0,12),xreg=as.matrix(X1),method="ML")
+modelo2=Arima(log(yt),order=c(10,0,9),xreg=as.matrix(X1),method="ML")
 k2=length(coef(modelo2)[coef(modelo2)!=0]);k2 
 dfmodelo2=n-k2
 coeftest(modelo2,df=dfmodelo2) 
@@ -181,7 +181,7 @@ ythat2=exp(modelo2$fitted)*exp(modelo2$sigma2/2)
 
 #-----MODELO 3:ARMA(6,0)(0,1)[12]-----------------------------------------------
 
-modelo3=Arima(log(yt),order=c(6,0,0),seasonal=list(order=c(0,0,1)),xreg=as.matrix(X1),method="ML") 
+modelo3=Arima(log(yt),order=c(11,0,6),seasonal=list(order=c(2,0,1)),xreg=as.matrix(X1),method="ML") 
 k3=length(coef(modelo3)[coef(modelo3)!=0]);k3 
 dfmodelo3=n-k3;
 coeftest(modelo3,df=dfmodelo3)
@@ -190,7 +190,7 @@ ythat3=exp(modelo3$fitted)*exp(modelo3$sigma2/2)
 
 #-----MODELO 4:ARMA(12,0) reglon1, + phi6------------------------------------------
 
-modelo4=Arima(log(yt),order=c(12,0,0),fixed=c(NA,rep(0,4),NA,rep(0,5),rep(NA,14)),xreg=as.matrix(X1),method="ML") 
+modelo4=Arima(log(yt),order=c(23,0,17),fixed=c(NA,NA,rep(0,2),NA,rep(0,6),NA,NA,0,NA,rep(0,6),NA,NA,rep(0,16),NA,rep(NA,15)),xreg=as.matrix(X1),method="ML") 
 k4=length(coef(modelo4)[coef(modelo4)!=0]);k4  
 dfmodelo4=n-k4
 coeftest(modelo4,df=dfmodelo4) 
@@ -203,25 +203,25 @@ ythat4=exp(modelo4$fitted)*exp(modelo4$sigma2/2)
 #MODELO 1
 win.graph()
 plot(Datosx, ylab="Datosx")
-lines(ythatmod1,col=2,lwd=2)
+lines(ythat1,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 1"),lty=1,col=c(1,2))
 
 #MODELO 2
 win.graph()
 plot(Datosx, ylab="Datosx")
-lines(ythatmod2,col=2,lwd=2)
+lines(ythat2,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 2"),lty=1,col=c(1,2)) 
 
 #MODELO 3
 win.graph()
 plot(Datosx, ylab="Datosx")
-lines(fitted(mod3),col=2,lwd=2)
+lines(ythat3,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 3"),lty=1,col=c(1,2))
 
 #MODELO 4
 win.graph()
 plot(Datosx, ylab="Datosx")
-lines(fitted(mod4),col=2,lwd=2)
+lines(ythat4,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 4"),lty=1,col=c(1,2))
 
 
@@ -282,22 +282,22 @@ abline(h=c(-2*sqrt(modelo4$sigma2),2*sqrt(modelo4$sigma2)),lty=2, col=2)
 
 #validacion de supuestos
 win.graph()
-acf(as.numeric(residuals(modelo1)),ci.type="ma",main="ACF Modelo 1",lag.max=36,ci.col=2)
+acf(as.numeric(residuals(modelo1)),ci.type="ma",lag.max=36,ci.col=2)
 win.graph()
-acf(as.numeric(residuals(modelo2)),ci.type="ma",main="ACF Modelo 2",lag.max=36,ci.col=2)
+acf(as.numeric(residuals(modelo2)),ci.type="ma",lag.max=36,ci.col=2)
 win.graph()
-acf(as.numeric(residuals(modelo3)),ci.type="ma",main="ACF Modelo 3",lag.max=36,ci.col=2) 
+acf(as.numeric(residuals(modelo3)),ci.type="ma",lag.max=36,ci.col=2) 
 win.graph()
-acf(as.numeric(residuals(modelo4)),ci.type="ma",main="ACF Modelo 4",lag.max=36,ci.col=2) 
+acf(as.numeric(residuals(modelo4)),ci.type="ma",lag.max=36,ci.col=2) 
 
 win.graph()
-pacf(as.numeric(residuals(modelo1)),main="PACF Modelo 1",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo1)),lag.max=36,ci.col=2)
 win.graph()
-pacf(as.numeric(residuals(modelo2)),main="PACF Modelo 2",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo2)),lag.max=36,ci.col=2)
 win.graph()
-pacf(as.numeric(residuals(modelo3)),main="PACF Modelo 3",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo3)),lag.max=36,ci.col=2)
 win.graph()
-pacf(as.numeric(residuals(modelo4)),main="PACF Modelo 4",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo4)),lag.max=36,ci.col=2)
 
 #tabla resumen Test Ljung-box
 tabla.LjungBox=cbind(BP.LB.test(residuals(modelo1),maxlag=36,type="Ljung"),BP.LB.test(residuals(modelo2),maxlag=36,type="Ljung"),BP.LB.test(residuals(modelo3),maxlag=36,type="Ljung"),BP.LB.test(residuals(modelo4),maxlag=36,type="Ljung"))[,c(1,3,4,6,7,9,10,12)]
