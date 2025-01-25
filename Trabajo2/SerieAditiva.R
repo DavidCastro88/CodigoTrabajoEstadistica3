@@ -221,25 +221,25 @@ ythat4=ts(fitted(modelo4),freq=m,start=start(yt))
 #MODELO 1
 win.graph()
 plot(Datosx, ylab="Datos13")
-lines(ythatmod1,col=2,lwd=2)
+lines(ythat1,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 1"),lty=1,col=c(1,2))
 
 #MODELO 2
 win.graph()
 plot(Datosx, ylab="Datos13")
-lines(ythatmod2,col=2,lwd=2)
+lines(ythat2,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 2"),lty=1,col=c(1,2)) 
 
 #MODELO 3
 win.graph()
 plot(Datosx, ylab="Datos13")
-lines(fitted(mod3),col=2,lwd=2)
+lines(ythat3,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 3"),lty=1,col=c(1,2))
 
 #MODELO 4
 win.graph()
 plot(Datosx, ylab="Datos13")
-lines(fitted(mod4),col=2,lwd=2)
+lines(ythat4,col=2,lwd=2)
 legend("topleft",legend=c("Original","Modelo 4"),lty=1,col=c(1,2))
 
 
@@ -300,22 +300,22 @@ abline(h=c(-2*sqrt(modelo4$sigma2),2*sqrt(modelo4$sigma2)),lty=2, col=2)
 
 #validacion de supuestos
 win.graph()
-acf(as.numeric(residuals(modelo1)),ci.type="ma",main="ACF Modelo 1",lag.max=36,ci.col=2)
+acf(as.numeric(residuals(modelo1)),ci.type="ma",lag.max=36,ci.col=2)
 win.graph()
-acf(as.numeric(residuals(modelo2)),ci.type="ma",main="ACF Modelo 2",lag.max=36,ci.col=2)
+acf(as.numeric(residuals(modelo2)),ci.type="ma",lag.max=36,ci.col=2)
 win.graph()
-acf(as.numeric(residuals(modelo3)),ci.type="ma",main="ACF Modelo 3",lag.max=36,ci.col=2) 
+acf(as.numeric(residuals(modelo3)),ci.type="ma",lag.max=36,ci.col=2) 
 win.graph()
-acf(as.numeric(residuals(modelo4)),ci.type="ma",main="ACF Modelo 4",lag.max=36,ci.col=2) 
+acf(as.numeric(residuals(modelo4)),ci.type="ma",lag.max=36,ci.col=2) 
 
 win.graph()
-pacf(as.numeric(residuals(modelo1)),main="PACF Modelo 1",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo1)),lag.max=36,ci.col=2)
 win.graph()
-pacf(as.numeric(residuals(modelo2)),main="PACF Modelo 2",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo2)),lag.max=36,ci.col=2)
 win.graph()
-pacf(as.numeric(residuals(modelo3)),main="PACF Modelo 3",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo3)),lag.max=36,ci.col=2)
 win.graph()
-pacf(as.numeric(residuals(modelo4)),main="PACF Modelo 4",lag.max=36,ci.col=2)
+pacf(as.numeric(residuals(modelo4)),lag.max=36,ci.col=2)
 
 #tabla resumen Test Ljung-box
 tabla.LjungBox=cbind(BP.LB.test(residuals(modelo1),maxlag=36,type="Ljung"),BP.LB.test(residuals(modelo2),maxlag=36,type="Ljung"),BP.LB.test(residuals(modelo3),maxlag=36,type="Ljung"),BP.LB.test(residuals(modelo4),maxlag=36,type="Ljung"))[,c(1,3,4,6,7,9,10,12)]
