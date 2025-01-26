@@ -18,10 +18,9 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-SelectModel.R") 
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-interpdeltas.R")
 
-#Leer anex-EMMET-TotalNacional-oct2023-Elaboracion de Bebidas.csv, columna 5: Produccion nominal
-Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",7),"numeric",rep("NULL",3)))
+#Leer anex-EMMET-TotalNacional-jul2024-Fabricacion de Otros Productos Quimicos.csv, columna 6: Produccion real
+Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",5),"numeric",rep("NULL",5)))
 Datosx=ts(Datosx,freq=12,start=c(2001,1))
-win.graph()
 plot(Datosx)
 
 #--------------------------------PUNTO 2a: ANALISIS DESCRIPTIVO DE LA SERIE---------------------------------
@@ -40,19 +39,19 @@ m=12
 n=length(Datosx)-m
 t=1:n
 yt=ts(Datosx[t],freq=m,start=c(2001,1))
-poli=Mipoly(tiempo=t,grado=4)
+poli=Mipoly(tiempo=t,grado=3)
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 
-#mes=seasonaldummy(yt)   # Utilizo esta si es con Indicadoras
-trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))  #Utilizo esta si es con trigonometricas
+mes=seasonaldummy(yt)   # Utilizo esta si es con Indicadoras
+#trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))  #Utilizo esta si es con trigonometricas
 
 #Matriz de diseño en el ajuste
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 
-#X1=data.frame(poli,mes)   # Utilizo esta si es con Indicadoras
-X1=data.frame(poli,trigon)  # Utilizo esta si es con trigonometricas
+X1=data.frame(poli,mes)   # Utilizo esta si es con Indicadoras
+#X1=data.frame(poli,trigon)  # Utilizo esta si es con trigonometricas
 head(X1) 
 
 #PARA LOS PRONOSTICOS
@@ -61,37 +60,21 @@ ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
 polinuevo=Mipoly(t=tnuevo,grado=3) #Cambiar Grado del polinomio
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
-trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5)) #Si es con trigonometricas
-#mesnuevo=seasonaldummy(yt,h=m)  #Si es con Indicadoras#Si es con indicadoras
+#trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5)) #Si es con trigonometricas
+mesnuevo=seasonaldummy(yt,h=m)  #Si es con Indicadoras#Si es con indicadoras
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 #Matriz de diseño en los pronosticos
-X1nuevo=data.frame(polinuevo,trigonnuevo)  #Si es con trigonometricas
-#X1nuevo=data.frame(polinuevo,mesnuevo) #Si es con Indicadoras#Si es con indicadoras
+#X1nuevo=data.frame(polinuevo,trigonnuevo)  #Si es con trigonometricas
+X1nuevo=data.frame(polinuevo,mesnuevo) #Si es con Indicadoras#Si es con indicadoras
 head(X1nuevo) 
-
-
-#PARA LOS PRONOSTICOS
-tnuevo=(n+1):length(Datosx)
-ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
-polinuevo=Mipoly(t=tnuevo,grado=3) #Cambiar Grado del polinomio
-trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
-
-#Matriz de diseño en los pronosticos
-X1nuevo=data.frame(polinuevo,trigonnuevo)
-head(X1nuevo) 
-
 
 
 # AJUSTE DEL MODELO
 
 modglobal=lm((yt)~.,data=X1)
 summary(modglobal)
-#Calculo valores ajustados del modelo 1
-ythatmod1=ts(fitted(modglobal),freq=m,start=start(yt))
 
-modglobal=lm((yt)~.,data=X1)
-summary(modglobal)
 tabla.parametros.globales=summary(modglobal)$coefficients
 tabla.parametros.globales
 write.csv2(tabla.parametros.globales,file="tablamod1ymod2trabajo1.csv",row.names = TRUE)
@@ -159,7 +142,7 @@ BP.LB.test(residuals(modglobal),maxlag=36,type="Ljung")
 #--------------------- PUNTO 3b: IDENTIFICACION DE POSIBLES MODELOS PARA Et--------------------------
 
 #EACF
-eacf(residuals(modglobal),ar.max = 36, ma.max = 36)  #Modificar si 24X24
+eacf(residuals(modglobal),ar.max = 24, ma.max = 24)  #Modificar si 24X24
 
 #Identificación de modelos AR(p) con SelectModel --- SOLO SI ACF tienen patron tipo cola --
 SelectModel(residuals(modglobal),lag.max=36,Criterion="AIC",ARModel ="AR")
@@ -175,40 +158,41 @@ auto.arima(serieEt,ic="aic")
 auto.arima(serieEt,ic="bic")
 
 #Identificación con armasubsets
-plot(armasubsets(residuals(modglobal),nar=12,nma=12,y.name="AR",ar.method="ml"))
+win.graph(heigh=5,width=10)
+plot(armasubsets(residuals(modglobal),nar=18,nma=18,y.name="AR",ar.method="ml"))
 
 #--------------------- PUNTO 4: Modelos de regresion global con errores estructurales Et-------------
 
-#-----MODELO 1:AR(15)-----------------------------------------------------------
+#-----MODELO 1:AR(16)-----------------------------------------------------------
 
-modelo1=Arima(yt,order=c(15,0,0),xreg=as.matrix(X1),method="ML") 
+modelo1=Arima(yt,order=c(16,0,0),xreg=as.matrix(X1),method="ML") 
 k1=length(coef(modelo1)[coef(modelo1)!=0]);k1 
 dfmodelo1=n-k1
 coeftest(modelo1,df=dfmodelo1)
 summary(modelo1)
 ythat1=ts(fitted(modelo1),freq=m,start=start(yt)) 
 
-#-----MODELO 2:ARMA(2,13)-------------------------------------------------------
+#-----MODELO 2:ARMA(4,13)-------------------------------------------------------
 
-modelo2=Arima(yt,order=c(2,0,13),xreg=as.matrix(X1),method="ML")
+modelo2=Arima(yt,order=c(4,0,13),xreg=as.matrix(X1),method="ML")
 k2=length(coef(modelo2)[coef(modelo2)!=0]);k2 
 dfmodelo2=n-k2
 coeftest(modelo2,df=dfmodelo2) 
 summary(modelo2)
 ythat2=ts(fitted(modelo2),freq=m,start=start(yt))
 
-#-----MODELO 3:ARMA(10,2)(1,0)[12]-----------------------------------------------
+#-----MODELO 3:ARMA(6,6)(1,1)[12]-----------------------------------------------
 
-modelo3=Arima(yt,order=c(10,0,2),seasonal=list(order=c(1,0,0)),xreg=as.matrix(X1),method="ML") 
+modelo3=Arima(yt,order=c(6,0,6),seasonal=list(order=c(1,0,1)),xreg=as.matrix(X1),method="ML") 
 k3=length(coef(modelo3)[coef(modelo3)!=0]);k3 
 dfmodelo3=n-k3;
 coeftest(modelo3,df=dfmodelo3)
 summary(modelo3)
 ythat3=ts(fitted(modelo3),freq=m,start=start(yt))
 
-#-----MODELO 4:ARMA(10,3) reglon4, + teta1------------------------------------------
+#-----MODELO 4:ARMA(18,0) reglon4, + teta1------------------------------------------
 
-modelo4=Arima(yt,order=c(10,0,3),fixed=c(0,NA,0,0,NA,0,0,0,0,NA,NA,NA,NA,rep(NA,15)),xreg=as.matrix(X1),method="ML") 
+modelo4=Arima(yt,order=c(18,0,0),fixed=c(NA,NA,rep(0,6),NA,rep(0,8),NA,rep(NA,15)),xreg=as.matrix(X1),method="ML") 
 k4=length(coef(modelo4)[coef(modelo4)!=0]);k4  
 dfmodelo4=n-k4
 coeftest(modelo4,df=dfmodelo4) 
@@ -247,7 +231,7 @@ legend("topleft",legend=c("Original","Modelo 4"),lty=1,col=c(1,2))
 
 #Calculo de los criterios AIC y BIC en modelo 1
 Res.orig.modelo1=yt-ythat1 
-Criteriosmodelo1=exp.crit.inf.resid(residuales=residuals(modelo1),n.par=k1); Criteriosmodelo1
+Criteriosmodelo1=exp.crit.inf.resid(residuales=Res.orig.modelo1,n.par=k1); Criteriosmodelo1
 #Calculo de los criterios AIC y BIC en modelo 2
 Res.orig.modelo2=yt-ythat2 
 Criteriosmodelo2=exp.crit.inf.resid(residuales= Res.orig.modelo2,n.par=k2); Criteriosmodelo2
@@ -274,29 +258,38 @@ write.csv2(tabla.parametros.ajuste,file="Parametrosajustados.csv",row.names = TR
 win.graph()
 plot(residuals(modelo1));abline(h=0)
 abline(h=c(-2*sqrt(modelo1$sigma2),2*sqrt(modelo1$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 1")
 win.graph()
 plot(residuals(modelo2));abline(h=0)
 abline(h=c(-2*sqrt(modelo2$sigma2),2*sqrt(modelo2$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 2")
 win.graph()
 plot(residuals(modelo3));abline(h=0)
 abline(h=c(-2*sqrt(modelo3$sigma2),2*sqrt(modelo3$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 3")
 win.graph()
 plot(residuals(modelo4));abline(h=0)
 abline(h=c(-2*sqrt(modelo4$sigma2),2*sqrt(modelo4$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 4")
 
 
 win.graph()
 plot(as.numeric(modelo1$fitted),residuals(modelo1));abline(h=0)
 abline(h=c(-2*sqrt(modelo1$sigma2),2*sqrt(modelo1$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 1")
 win.graph()
 plot(as.numeric(modelo2$fitted),residuals(modelo2));abline(h=0)
 abline(h=c(-2*sqrt(modelo2$sigma2),2*sqrt(modelo2$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 2")
 win.graph()
 plot(as.numeric(modelo3$fitted),residuals(modelo3));abline(h=0)
 abline(h=c(-2*sqrt(modelo3$sigma2),2*sqrt(modelo3$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 3")
 win.graph()
 plot(as.numeric(modelo4$fitted),residuals(modelo4));abline(h=0)
 abline(h=c(-2*sqrt(modelo4$sigma2),2*sqrt(modelo4$sigma2)),lty=2, col=2)
+legend("bottomleft",legend="Modelo 4")
+
 
 #validacion de supuestos
 win.graph()
@@ -342,7 +335,7 @@ shapiro.test(residuals(modelo1))
 tabla.Shapiro=rbind(shapiro.test(residuals(modelo1)),shapiro.test(residuals(modelo2)),shapiro.test(residuals(modelo3)),shapiro.test(residuals(modelo4)))[,c(1,2)]
 rownames(tabla.Shapiro)=c("Modelo1","Modelo2","Modelo3","Modelo4")
 tabla.Shapiro
-
+write.csv2(tabla.Shapiro,file="ShapiroWilk.csv",row.names = TRUE)
 
 #---------------------------------- PUNTO 6: PRONOSTICOS PARA LA VALIDACION CRUZADA ----------------------------------------
 
@@ -394,7 +387,7 @@ lines(ytpron1,col=2,pch=1,type="b",lwd=2)
 lines(ytpron2,col=3,pch=2,type="b",lwd=2)
 lines(ytpron3,col=4,pch=3,type="b",lwd=2)
 lines(ytpron4,col=5,pch=4,type="b",lwd=2)
-legend("topleft",legend=c("Real","Modelo 1","Modelo 2","Modelo 3","Modelo 4"),pch=c(19,1:4),col=c(1:5),lwd=2)
+legend("bottomleft",legend=c("Real","Modelo 1","Modelo 2","Modelo 3","Modelo 4"),pch=c(19,1:4),col=c(1:5),lwd=2)
 
 #tabla resumen de medidas de pronosticos
 tabla.pronosticos=cbind(predmodelo1,predmodelo2,predmodelo3,predmodelo4)
@@ -473,10 +466,3 @@ BP.LB.test(residuals(modelocal),maxlag=36,type="Ljung")
 tabla.ajuste=rbind(Criteriosmodelo1,Criteriosmodelo2,Criteriosmodelo3,Criteriosmodelo4)
 rownames(tabla.ajuste)=c("Modelo1","Modelo2","Modelo3","Modelo4")
 tabla.ajuste
-
-#tabla resumen de medidas de precision de pronosticos
-precision.puntuales=rbind(accuracy(ytpron1,ytnuevo),accuracy(ytpron2,ytnuevo),accuracy(ytpron3,ytnuevo),accuracy(ytpron4,ytnuevo))[,c(2,3,5)]
-precision.intervalos=rbind(amplcobmodelo1,amplcobmodelo2,amplcobmodelo3,amplcobmodelo4)
-tabla.precision=cbind(precision.puntuales,precision.intervalos)
-rownames(tabla.precision)=c("Modelo1","Modelo2","Modelo3","Modelo4")
-tabla.precision
