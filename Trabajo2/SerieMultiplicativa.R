@@ -442,11 +442,11 @@ amplcobmodelocal=amplitud.cobertura(real=ytnuevo,LIP=pronoslocal[,2],LSP=pronosl
 
 #ACF 
 win.graph()
-acf(as.numeric(residuals(modelocal)),ci.type="ma",lag.max=36,main="ACF Modelo local")
+acf(as.numeric(residuals(modelocal)),ci.type="ma",lag.max=36)
 
 #PACF
 win.graph()
-pacf(as.numeric(residuals(modelocal)),lag.max=36,main="PACF Modelo local")
+pacf(as.numeric(residuals(modelocal)),lag.max=36)
 
 BP.LB.test(residuals(modelocal),maxlag=36,type="Ljung")
 
