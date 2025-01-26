@@ -18,7 +18,7 @@ source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Est
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-SelectModel.R") 
 source("https://raw.githubusercontent.com/NelfiGonzalez/Funciones-de-Usuario-Estadistica-III/main/Funcion-interpdeltas.R")
 
-#Leer anex-EMMET-TotalNacional-jul2024-Fabricacion de Muebles Colchones y Somieres.csv, columna 7: Ventas nominal
+#Leer anex-EMMET-TotalNacional-jul2024-Fabricacion de Otros Productos Quimicos.csv, columna 7: Ventas nominal
 Datosx=read.table(file.choose(),header=T,sep=";",skip=14,dec=",",colClasses=c(rep("NULL",6),"numeric",rep("NULL",4)))
 Datosx=ts(Datosx,freq=12,start=c(2001,1))
 plot(Datosx)
@@ -31,7 +31,7 @@ plot(log(Datosx),ylab="Datosx")
 
 #Grafica ACF estimada con la serie: m = 36 en el caso mensual 
 win.graph()
-acf(as.numeric(Datosx),lag.max=36,ci.type="ma",col=4,ci.col=2)
+acf(as.numeric(log(Datosx)),lag.max=36,ci.type="ma",col=4,ci.col=2)
 
 #--------------------------------PUNTO 2b: MODELO DE REGRESION GLOBAL-----------------------------------------
 
@@ -43,12 +43,12 @@ poli=Mipoly(tiempo=t,grado=3)
 
 #-#-#-#-# #-#-#-#-#   IMPORTANTE    #-#-#-#-#  #-#-#-#-#  
 
-#mes=seasonaldummy(yt)   # Utilizo esta si es con Indicadoras
-trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))  #Utilizo esta si es con trigonometricas
+mes=seasonaldummy(yt)   # Utilizo esta si es con Indicadoras
+#trigon=Mytrigon(tiempo=t,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))  #Utilizo esta si es con trigonometricas
 
 #Matriz de diseño en el ajuste
-#X1=data.frame(poli,mes)   # Utilizo esta si es con Indicadoras
-X1=data.frame(poli,trigon)  # Utilizo esta si es con trigonometricas
+X1=data.frame(poli,mes)   # Utilizo esta si es con Indicadoras
+#X1=data.frame(poli,trigon)  # Utilizo esta si es con trigonometricas
 head(X1) 
 
 
@@ -56,10 +56,11 @@ head(X1)
 tnuevo=(n+1):length(Datosx)
 ytnuevo=ts(Datosx[tnuevo],freq=m,start=c(2023,8))
 polinuevo=Mipoly(t=tnuevo,grado=3)
-trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
-
+#trigonnuevo=Mytrigon(tiempo=tnuevo,Frecuencias=c(c(1,2,3,4,5)/12),indicej=c(1,2,3,4,5))
+mesnuevo=seasonaldummy(yt,h=m)
 #Matriz de diseño en los pronosticos
-X1nuevo=data.frame(polinuevo,trigonnuevo)
+#X1nuevo=data.frame(polinuevo,trigonnuevo)
+X1nuevo=data.frame(polinuevo,mesnuevo)
 head(X1nuevo) 
 
 
@@ -151,31 +152,31 @@ auto.arima(serieEt,ic="bic")
 
 #Identificación con armasubsets
 win.graph(heigh=5,width=10)
-plot(armasubsets(residuals(modglobal),nar=12,nma=12,y.name='AR',ar.method="ml")) 
+plot(armasubsets(residuals(modglobal),nar=18,nma=18,y.name='AR',ar.method="ml")) 
 
 #--------------------- PUNTO 4: Modelos de regresion global con errores estructurales Et-------------
 
-#-----MODELO 1:AR(12)-----------------------------------------------------------
+#-----MODELO 1:AR(24)-----------------------------------------------------------
 
-modelo1=Arima(log(yt),order=c(12,0,0),xreg=as.matrix(X1),method="ML") 
+modelo1=Arima(log(yt),order=c(24,0,0),xreg=as.matrix(X1),method="ML") 
 k1=length(coef(modelo1)[coef(modelo1)!=0]);k1 
 dfmodelo1=n-k1
 coeftest(modelo1,df=dfmodelo1)
 summary(modelo1)
 ythat1=exp(modelo1$fitted)*exp(modelo1$sigma2/2)
 
-#-----MODELO 2:ARMA(2,12)-------------------------------------------------------
+#-----MODELO 2:ARMA(3,12)-------------------------------------------------------
 
-modelo2=Arima(log(yt),order=c(2,0,12),xreg=as.matrix(X1),method="ML")
+modelo2=Arima(log(yt),order=c(3,0,12),xreg=as.matrix(X1),method="ML")
 k2=length(coef(modelo2)[coef(modelo2)!=0]);k2 
 dfmodelo2=n-k2
 coeftest(modelo2,df=dfmodelo2) 
 summary(modelo2)
 ythat2=exp(modelo2$fitted)*exp(modelo2$sigma2/2)
 
-#-----MODELO 3:ARMA(6,0)(0,1)[12]-----------------------------------------------
+#-----MODELO 3:ARMA(2,8)(2,1)[12]-----------------------------------------------
 
-modelo3=Arima(log(yt),order=c(6,0,0),seasonal=list(order=c(0,0,1)),xreg=as.matrix(X1),method="ML") 
+modelo3=Arima(log(yt),order=c(2,0,8),seasonal=list(order=c(2,0,1)),xreg=as.matrix(X1),method="ML") 
 k3=length(coef(modelo3)[coef(modelo3)!=0]);k3 
 dfmodelo3=n-k3;
 coeftest(modelo3,df=dfmodelo3)
@@ -184,7 +185,7 @@ ythat3=exp(modelo3$fitted)*exp(modelo3$sigma2/2)
 
 #-----MODELO 4:ARMA(12,0) reglon1, + phi6------------------------------------------
 
-modelo4=Arima(log(yt),order=c(12,0,0),fixed=c(NA,rep(0,4),NA,rep(0,5),NA,rep(NA,14)),xreg=as.matrix(X1),method="ML") 
+modelo4=Arima(log(yt),order=c(15,0,18),fixed=c(NA,NA,rep(0,9),NA,0,0,NA,0,NA,NA,rep(0,3),NA,NA,rep(0,3),NA,0,NA,rep(0,3),NA,rep(NA,15)),xreg=as.matrix(X1),method="ML") 
 k4=length(coef(modelo4)[coef(modelo4)!=0]);k4  
 dfmodelo4=n-k4
 coeftest(modelo4,df=dfmodelo4) 
@@ -378,7 +379,7 @@ lines(ytpron1,col=2,pch=1,type="b",lwd=2)
 lines(ytpron2,col=3,pch=2,type="b",lwd=2)
 lines(ytpron3,col=4,pch=3,type="b",lwd=2)
 lines(ytpron4,col=5,pch=4,type="b",lwd=2)
-legend("topleft",legend=c("Real","Modelo 1","Modelo 2","Modelo 3","Modelo 4"),pch=c(19,1:4),col=c(1:5),lwd=2)
+legend("bottomleft",legend=c("Real","Modelo 1","Modelo 2","Modelo 3","Modelo 4"),pch=c(19,1:4),col=c(1:5),lwd=2)
 
 #tabla resumen de medidas de pronosticos
 tabla.pronosticos=cbind(predmodelo1,predmodelo2,predmodelo3,predmodelo4)
