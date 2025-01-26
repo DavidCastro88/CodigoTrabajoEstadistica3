@@ -363,7 +363,7 @@ predmodelo3
 ytpron3=predmodelo3[,1]
 #Modelo 4
 predmodelo4=as.data.frame(forecast(modelo4,xreg=as.matrix(X1nuevo),level=95))
-predmodelo4=ts(predmodelo4,freq=m,start=c(2022,11)) #Fechas y frecuencia según datos en pronósticos
+predmodelo4=ts(predmodelo4,freq=m,start=c(2023,8)) #Fechas y frecuencia según datos en pronósticos
 predmodelo4
 ytpron4=predmodelo4[,1]
 
@@ -405,7 +405,8 @@ write.csv2(tabla.pronosticos,file="Pronosticos.csv",row.names = TRUE)
 #tabla resumen de medidas de precision de pronosticos
 precision.puntuales=rbind(accuracy(ytpron1,ytnuevo),accuracy(ytpron2,ytnuevo),accuracy(ytpron3,ytnuevo),accuracy(ytpron4,ytnuevo))[,c(2,3,5)]
 precision.intervalos=rbind(amplcobmodelo1,amplcobmodelo2,amplcobmodelo3,amplcobmodelo4)
-tabla.precision=cbind(precision.puntuales,precision.intervalos)
+precision.scorepromedio = rbind(ScoreIP1,ScoreIP2,ScoreIP3,ScoreIP4)
+tabla.precision=cbind(precision.puntuales,precision.intervalos,precision.scorepromedio)
 rownames(tabla.precision)=c("Modelo1","Modelo2","Modelo3","Modelo4")
 tabla.precision
 write.csv2(tabla.precision,file="Pronosticosoprecision.csv",row.names = TRUE)
@@ -457,11 +458,11 @@ amplcobmodelocal=amplitud.cobertura(real=ytnuevo,LIP=pronoslocal[,2],LSP=pronosl
 
 #ACF 
 win.graph()
-acf(as.numeric(residuals(modelocal)),ci.type="ma",lag.max=36,main="ACF Modelo local")
+acf(as.numeric(residuals(modelocal)),ci.type="ma",lag.max=36)
 
 #PACF
 win.graph()
-pacf(as.numeric(residuals(modelocal)),lag.max=36,main="PACF Modelo local")
+pacf(as.numeric(residuals(modelocal)),lag.max=36)
 
 BP.LB.test(residuals(modelocal),maxlag=36,type="Ljung")
 
