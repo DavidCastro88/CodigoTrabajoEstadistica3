@@ -348,7 +348,7 @@ predmodelo3
 ytpron3=predmodelo3[,1]
 #Modelo 4
 predmodelo4=exp(as.data.frame(forecast(modelo4,xreg=as.matrix(X1nuevo),level=95)))*exp(modelo4$sigma2/2) 
-predmodelo4=ts(predmodelo3,freq=m,start=c(2023,8)) 
+predmodelo4=ts(predmodelo4,freq=m,start=c(2023,8)) 
 predmodelo4
 ytpron4=predmodelo4[,1]
 
